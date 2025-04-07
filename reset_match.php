@@ -24,8 +24,8 @@ if (isset($_GET['match_id'])) {
     $stmt->bindParam(':match_id', $matchId, PDO::PARAM_INT);
     $stmt->execute();
     
-    // Перенаправляем обратно на страницу матча
-    header("Location: index.php?id=1&match=$matchId");
+    // Перенаправляем на страницу выбора игрока с указанием номера матча
+    header("Location: index.php?match=$matchId");
     exit();
 }
 

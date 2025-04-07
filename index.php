@@ -227,6 +227,23 @@ if (count($availableMaps) > 1) {
             cursor: default;
             border-color: #f5c2c7;
         }
+        .last-map {
+            background-color: #d1e7dd;
+            color: #0f5132;
+            border-color: #badbcc;
+            position: relative;
+            overflow: hidden;
+        }
+        .final-map-badge {
+            position: absolute;
+            bottom: 5px;
+            left: 0;
+            right: 0;
+            font-size: 0.8rem;
+            background-color: #0f5132;
+            color: white;
+            padding: 2px 0;
+        }
         .player-badge {
             display: inline-block;
             padding: 5px 15px;
@@ -254,6 +271,10 @@ if (count($availableMaps) > 1) {
             font-size: 1.2rem;
             font-weight: bold;
             color: #dc3545;
+            min-width: 150px; /* Фиксированная минимальная ширина */
+            height: 1.5rem; /* Фиксированная высота */
+            display: inline-block;
+            text-align: right;
         }
         .footer {
             margin-top: 40px;
@@ -284,12 +305,25 @@ if (count($availableMaps) > 1) {
 
                 <div class="map-list" id="map-list">
                     <?php foreach ($allMaps as $map): ?>
-                        <div class="map-item <?php if (in_array($map, $bannedMaps)) echo 'banned'; ?>"
-                             data-map="<?php echo $map; ?>"
-                             <?php if (!in_array($map, $bannedMaps) && $currentPlayerId === $userId && count($availableMaps) > 1): ?>
+                        <?php 
+                        $isBanned = in_array($map, $bannedMaps);
+                        $isLastMap = count($availableMaps) === 1 && !$isBanned;
+                        $canBeBanned = !$isBanned && $currentPlayerId === $userId && count($availableMaps) > 1;
+                        
+                        $classes = [];
+                        if ($isBanned) $classes[] = 'banned';
+                        if ($isLastMap) $classes[] = 'last-map';
+                        $classString = !empty($classes) ? 'class="map-item ' . implode(' ', $classes) . '"' : 'class="map-item"';
+                        ?>
+                        
+                        <div <?php echo $classString; ?> data-map="<?php echo $map; ?>"
+                             <?php if ($canBeBanned): ?>
                                  onclick="banMap('<?php echo $map; ?>', <?php echo $matchId; ?>, <?php echo $userId; ?>)"
                              <?php endif; ?>>
                             <?php echo $map; ?>
+                            <?php if ($isLastMap): ?>
+                                <div class="final-map-badge">Финальная карта</div>
+                            <?php endif; ?>
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -329,17 +363,37 @@ if (count($availableMaps) > 1) {
 
         // Функция для обновления таймера
         function updateTimer() {
-            // Здесь нужно получить время последнего действия с сервера
-            // и вычислить оставшееся время
             fetch(`get_timer.php?match_id=<?php echo $matchId; ?>`)
             .then(response => response.json())
             .then(data => {
                 const timeLeft = 60 - data.elapsed;
+                const timerElement = document.getElementById('timer');
+                
                 if (timeLeft > 0) {
-                    document.getElementById('timer').textContent = `Осталось: ${timeLeft} сек`;
+                    timerElement.textContent = `Осталось: ${timeLeft} сек`;
                 } else {
-                    document.getElementById('timer').textContent = 'Время вышло!';
+                    timerElement.textContent = 'Время вышло!';
+                    // Если время вышло, обновляем страницу для применения автоматического бана
+                    checkForUpdates(); // Вместо полного обновления страницы, проверяем изменения
                 }
+            })
+            .catch(error => {
+                console.error('Ошибка обновления таймера:', error);
+            });
+        }
+
+        // Функция для проверки изменений в игре без обновления всей страницы
+        function checkForUpdates() {
+            fetch(`get_game_state.php?match_id=<?php echo $matchId; ?>&user_id=<?php echo $userId; ?>`)
+            .then(response => response.json())
+            .then(data => {
+                // Обновляем только если есть изменения в состоянии игры
+                if (data.needsUpdate) {
+                    updatePage();
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка проверки обновлений:', error);
             });
         }
 
@@ -356,16 +410,12 @@ if (count($availableMaps) > 1) {
                 // Переназначение обработчиков клика для оставшихся карт
                 const mapItems = document.querySelectorAll('.map-item:not(.banned)');
                 mapItems.forEach(item => {
-                    item.onclick = function() {
-                        banMap(this.dataset.map, <?php echo $matchId; ?>, <?php echo $userId; ?>);
-                    };
+                    if (!item.classList.contains('last-map')) {
+                        item.onclick = function() {
+                            banMap(this.dataset.map, <?php echo $matchId; ?>, <?php echo $userId; ?>);
+                        };
+                    }
                 });
-
-                // Обновляем таймер
-                updateTimer();
-
-                // Запускаем следующее обновление через 2 секунды
-                setTimeout(updatePage, 2000);
             })
             .catch(error => {
                 console.error('Ошибка обновления:', error);
@@ -373,9 +423,13 @@ if (count($availableMaps) > 1) {
         }
 
         // Запускаем периодическое обновление при загрузке страницы
-        updatePage();
-        // Обновляем таймер каждую секунду
-        setInterval(updateTimer, 1000);
+        document.addEventListener('DOMContentLoaded', function() {
+            updatePage();
+            // Обновляем таймер каждую секунду
+            setInterval(updateTimer, 1000);
+            // Проверяем изменения в игре каждые 5 секунд
+            setInterval(checkForUpdates, 5000);
+        });
     </script>
 </body>
 </html>
