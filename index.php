@@ -18,26 +18,74 @@ $userId = isset($_GET['id']) ? intval($_GET['id']) : null;
 if ($userId === null || $userId === 0) {
     ?>
     <!DOCTYPE html>
-    <html>
+    <html lang="ru">
     <head>
-        <title>Выбор игрока</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>CS2 Map Ban System - Выбор игрока</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
         <style>
-            body { font-family: sans-serif; text-align: center; margin-top: 50px; }
-            .button { 
-                display: inline-block; 
-                padding: 10px 20px; 
+            body {
+                background-color: #f8f9fa;
+                padding-top: 50px;
+            }
+            .card {
+                border-radius: 15px;
+                box-shadow: 0 6px 10px rgba(0,0,0,.08);
+                transition: all .3s;
+            }
+            .card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 20px rgba(0,0,0,.12);
+            }
+            .btn-player {
+                padding: 12px 30px;
+                font-weight: 600;
                 margin: 10px;
-                background-color: #4CAF50; 
-                color: white; 
-                text-decoration: none; 
-                border-radius: 4px;
+                border-radius: 50px;
+                transition: all .3s;
+            }
+            .btn-player-1 {
+                background-color: #007bff;
+                border-color: #007bff;
+            }
+            .btn-player-2 {
+                background-color: #dc3545;
+                border-color: #dc3545;
+            }
+            .logo {
+                max-width: 150px;
+                margin-bottom: 20px;
             }
         </style>
     </head>
     <body>
-        <h1>Выберите игрока</h1>
-        <a href="index.php?id=1&match=1" class="button">Игрок 1</a>
-        <a href="index.php?id=2&match=1" class="button">Игрок 2</a>
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-lg-6">
+                    <div class="card p-5 text-center">
+                        <div class="card-body">
+                            <h1 class="card-title mb-4">CS2 Map Ban System</h1>
+                            <p class="card-text mb-4">Выберите игрока, чтобы начать процесс бана карт</p>
+                            
+                            <div class="d-grid gap-2 d-md-block">
+                                <a href="index.php?id=1&match=1" class="btn btn-primary btn-lg btn-player btn-player-1">
+                                    <i class="bi bi-person-fill"></i> Игрок 1
+                                </a>
+                                <a href="index.php?id=2&match=1" class="btn btn-danger btn-lg btn-player btn-player-2">
+                                    <i class="bi bi-person-fill"></i> Игрок 2
+                                </a>
+                            </div>
+                            
+                            <div class="mt-4">
+                                <a href="create_match.php" class="btn btn-outline-secondary">Создать новый матч</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
     </body>
     </html>
     <?php
@@ -130,34 +178,135 @@ if (count($availableMaps) > 1) {
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <title>Баны карт CS:GO</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CS2 Map Ban System - Матч #<?php echo $matchId; ?></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
-        body { font-family: sans-serif; }
-        .map-list { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
-        .map-item { border: 1px solid #ccc; padding: 10px; cursor: pointer; }
-        .banned { background-color: #fdd; color: #800; text-decoration: line-through; cursor: default; }
-        #message { margin-bottom: 15px; font-weight: bold; }
+        body {
+            background-color: #f8f9fa;
+            padding: 30px 0;
+        }
+        .map-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        .map-item {
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            width: 180px;
+            height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,.05);
+            transition: all .3s;
+            cursor: pointer;
+            font-weight: 600;
+            border: 2px solid #e9ecef;
+        }
+        .map-item:hover:not(.banned) {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,.1);
+            border-color: #007bff;
+        }
+        .banned {
+            background-color: #f8d7da;
+            color: #842029;
+            text-decoration: line-through;
+            opacity: 0.7;
+            cursor: default;
+            border-color: #f5c2c7;
+        }
+        .player-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .player-1 {
+            background-color: #cfe2ff;
+            color: #084298;
+        }
+        .player-2 {
+            background-color: #f8d7da;
+            color: #842029;
+        }
+        .message-box {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,.05);
+            border-left: 5px solid #0d6efd;
+        }
+        .timer {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #dc3545;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+        }
     </style>
 </head>
 <body>
-    <h1>Баны карт CS:GO (Матч #<?php echo $matchId; ?>)</h1>
-    <div id="message"><?php echo $message; ?></div>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1>CS2 Map Ban System 
+                        <span class="badge bg-secondary">Матч #<?php echo $matchId; ?></span>
+                        <span class="player-badge <?php echo $userId === 1 ? 'player-1' : 'player-2'; ?>">
+                            Игрок <?php echo $userId; ?>
+                        </span>
+                    </h1>
+                </div>
+                
+                <div class="message-box" id="message">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div><?php echo $message; ?></div>
+                        <div class="timer" id="timer"></div>
+                    </div>
+                </div>
 
-    <div class="map-list" id="map-list">
-        <?php foreach ($allMaps as $map): ?>
-            <div class="map-item <?php if (in_array($map, $bannedMaps)) echo 'banned'; ?>"
-                 data-map="<?php echo $map; ?>"
-                 <?php if (!in_array($map, $bannedMaps) && $currentPlayerId === $userId && count($availableMaps) > 1): ?>
-                     onclick="banMap('<?php echo $map; ?>', <?php echo $matchId; ?>, <?php echo $userId; ?>)"
-                 <?php endif; ?>>
-                <?php echo $map; ?>
+                <div class="map-list" id="map-list">
+                    <?php foreach ($allMaps as $map): ?>
+                        <div class="map-item <?php if (in_array($map, $bannedMaps)) echo 'banned'; ?>"
+                             data-map="<?php echo $map; ?>"
+                             <?php if (!in_array($map, $bannedMaps) && $currentPlayerId === $userId && count($availableMaps) > 1): ?>
+                                 onclick="banMap('<?php echo $map; ?>', <?php echo $matchId; ?>, <?php echo $userId; ?>)"
+                             <?php endif; ?>>
+                            <?php echo $map; ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <div class="footer text-center">
+                    <a href="reset_match.php?match_id=<?php echo $matchId; ?>" class="btn btn-outline-secondary me-2">
+                        <i class="bi bi-arrow-repeat"></i> Сбросить матч
+                    </a>
+                    <a href="create_match.php" class="btn btn-outline-primary">
+                        <i class="bi bi-plus-circle"></i> Создать новый матч
+                    </a>
+                </div>
             </div>
-        <?php endforeach; ?>
+        </div>
     </div>
 
-    <script src="js/script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Функция для отправки AJAX-запроса на бан карты
         function banMap(mapName, matchId, userId) {
@@ -175,6 +324,22 @@ if (count($availableMaps) > 1) {
             })
             .catch(error => {
                 console.error('Ошибка:', error);
+            });
+        }
+
+        // Функция для обновления таймера
+        function updateTimer() {
+            // Здесь нужно получить время последнего действия с сервера
+            // и вычислить оставшееся время
+            fetch(`get_timer.php?match_id=<?php echo $matchId; ?>`)
+            .then(response => response.json())
+            .then(data => {
+                const timeLeft = 60 - data.elapsed;
+                if (timeLeft > 0) {
+                    document.getElementById('timer').textContent = `Осталось: ${timeLeft} сек`;
+                } else {
+                    document.getElementById('timer').textContent = 'Время вышло!';
+                }
             });
         }
 
@@ -196,7 +361,10 @@ if (count($availableMaps) > 1) {
                     };
                 });
 
-                // Запускаем следующее обновление через 2 секунды (можно настроить)
+                // Обновляем таймер
+                updateTimer();
+
+                // Запускаем следующее обновление через 2 секунды
                 setTimeout(updatePage, 2000);
             })
             .catch(error => {
@@ -206,10 +374,8 @@ if (count($availableMaps) > 1) {
 
         // Запускаем периодическое обновление при загрузке страницы
         updatePage();
+        // Обновляем таймер каждую секунду
+        setInterval(updateTimer, 1000);
     </script>
-    <div style="margin-top: 20px;">
-        <a href="reset_match.php?match_id=<?php echo $matchId; ?>">Сбросить матч</a> |
-        <a href="create_match.php">Создать новый матч</a>
-    </div>
 </body>
 </html>
